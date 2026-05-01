@@ -6,8 +6,11 @@
       "destination": "/api/index.js"
     },
     {
+      "handle": "filesystem"
+    },
+    {
       "source": "/(.*)",
-      "destination": "/$1"
+      "destination": "/api/index.js"
     }
   ],
   "cleanUrls": true
