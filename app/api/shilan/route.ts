@@ -2,72 +2,48 @@ export const runtime = "edge";
 
 const TARGET_BASE = (process.env.TARGET_DOMAIN || "").replace(/\/$/, "");
 
-const STRIP_HEADERS = new Set([
-  "host",
-  "connection",
-  "keep-alive",
-  "proxy-authenticate",
-  "proxy-authorization",
-  "te",
-  "trailer",
-  "transfer-encoding",
-  "upgrade",
-  "forwarded",
-  "x-forwarded-host",
-  "x-forwarded-proto",
-  "x-forwarded-port",
-]);
-
-async function handler(req) {
+export async function ALL(req) {
   if (!TARGET_BASE) {
-    return new Response("Misconfigured: TARGET_DOMAIN is not set", { status: 500 });
+    return new Response("Target Domain is not set in Environment Variables", { status: 500 });
   }
 
   try {
+    // در این ساختار، چون فایل مستقیماً در پوشه shilan است، 
+    // مستقیماً آدرس مقصد را می‌سازیم
     const url = new URL(req.url);
-    // این خط تمام مسیر بعد از دامنه ورسل را استخراج می‌کند (مثلاً /api/shilan)
-    const pathStart = req.url.indexOf("/", 8);
-    const targetUrl = pathStart === -1 ? TARGET_BASE + "/" : TARGET_BASE + req.url.slice(pathStart);
+    const targetUrl = `${TARGET_BASE}/shilan${url.search}`;
 
     const out = new Headers();
-    let clientIp = null;
+    const STRIP_HEADERS = ["host", "connection", "upgrade", "forwarded"];
 
     for (const [k, v] of req.headers) {
-      const lowerK = k.toLowerCase();
-      if (STRIP_HEADERS.has(lowerK)) continue;
-      if (lowerK.startsWith("x-vercel-")) continue;
-      if (lowerK === "x-real-ip") {
-        clientIp = v;
-        continue;
-      }
-      if (lowerK === "x-forwarded-for") {
-        if (!clientIp) clientIp = v;
-        continue;
-      }
+      if (STRIP_HEADERS.includes(k.toLowerCase()) || k.toLowerCase().startsWith("x-vercel-")) continue;
       out.set(k, v);
     }
+
+    // تنظیم IP واقعی کلاینت
+    const clientIp = req.headers.get("x-forwarded-for") || req.headers.get("x-real-ip");
     if (clientIp) out.set("x-forwarded-for", clientIp);
 
-    const method = req.method;
-    const hasBody = method !== "GET" && method !== "HEAD";
+    const hasBody = !["GET", "HEAD"].includes(req.method);
 
     return await fetch(targetUrl, {
-      method,
+      method: req.method,
       headers: out,
       body: hasBody ? req.body : undefined,
       duplex: "half",
       redirect: "manual",
     });
   } catch (err) {
-    console.error("relay error:", err);
-    return new Response("Bad Gateway: Tunnel Failed", { status: 502 });
+    return new Response(`Relay Error: ${err.message}`, { status: 502 });
   }
 }
 
-// در Next.js باید متدها را صادر کنید
-export const GET = handler;
-export const POST = handler;
-export const PUT = handler;
-export const PATCH = handler;
-export const DELETE = handler;
-export const HEAD = handler;
+// برای اینکه تمام متدها را ساپورت کند
+export const GET = ALL;
+export const POST = ALL;
+export const PUT = ALL;
+export const PATCH = ALL;
+export const DELETE = ALL;
+export const HEAD = ALL;
+export const OPTIONS = ALL;
