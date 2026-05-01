@@ -1,0 +1,33 @@
+body {
+    font-family: Tahoma, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+.container {
+    width: 90%;
+    max-width: 600px;
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    text-align: center;
+}
+.card {
+    border-right: 5px solid #0070f3;
+    background: #fafafa;
+    padding: 15px;
+    margin: 20px 0;
+    text-align: right;
+}
+.status-tag {
+    background: #e1ffeb;
+    color: #007f2d;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 0.8em;
+}
+h1 { color: #333; }
